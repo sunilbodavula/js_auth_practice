@@ -11,6 +11,18 @@ const register = async (req, res) => {
     });
 };
 
+const login = async (req, res) => {
+    const {email, password} = req.body;
+
+    const result = await authService.loginUser(email, password);
+
+    res.status(200).json({
+        message: "User logged in successfully",
+        ...result
+    });
+};
+
 module.exports = {
-    register
+    register,
+    login
 };
