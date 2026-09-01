@@ -1,7 +1,16 @@
 const bcrypt = require("bcrypt");
 const userRepository = require("../repositories/user.repository");
 const AppError = require("../utils/AppError");
+const { 
+    generateAccessToken,
+    generateRefreshToken,
+    generateSessionId,
+    hashToken
+ } = require("../utils/genToken");
+const sessionRepository = require("../repositories/session.repository");
 
+
+const REFRESH_TOKEN_EXPIRES_IN = 7 * 24 * 60 * 60; // 7 days in seconds
 const saltRounds = 12;
 
 const registerUser = async (name, email, password) => {
@@ -49,7 +58,28 @@ const loginUser = async (email, password) => {
         );
     }
 
+    const accessToken = generateAccessToken(user.id);
+
+    const refreshSecret = generateRefreshToken();
+
+    const sessionId = generateSessionId();
+
+    const refreshToken = `${sessionId}.${refreshSecret}`;
+
+    const tokenHash = hashToken(refreshSecret);
+
+    await sessionRepository.createSession(
+        sessionId,
+        {
+            userId: user.id,
+            tokenHash
+        },
+        REFRESH_TOKEN_EXPIRES_IN
+    )
+
     return {
+        accessToken,
+        refreshToken,
         user: {
             id: user.id,
             name: user.name,
