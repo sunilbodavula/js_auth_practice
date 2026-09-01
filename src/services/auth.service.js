@@ -88,7 +88,67 @@ const loginUser = async (email, password) => {
     }
 }
 
+const refreshAccessToken = async (refreshToken) => {
+
+    const parts = refreshToken.split(".");
+
+    if(parts.length !== 2){
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        )
+    }
+
+    const [sessionId, refreshSecret] = parts;
+
+    const session = await sessionRepository.getSession(sessionId);
+
+    if(!session){
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        )
+    }
+
+    const incomingTokenHash = hashToken(refreshSecret);
+
+    if(incomingTokenHash !== session.tokenHash){
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        )
+    }
+
+    await sessionRepository.deleteSession(sessionId);
+
+    const newAccessToken = generateAccessToken(session.userId);
+
+    const newRefreshSecret = generateRefreshToken();
+
+    const newSessionId = generateSessionId();
+
+    const newRefreshToken = `${newSessionId}.${newRefreshSecret}`;
+
+    const newTokenHash = hashToken(newRefreshSecret);
+
+    await sessionRepository.createSession(
+        newSessionId,
+        {
+            userId: session.userId,
+            tokenHash: newTokenHash
+        },
+        REFRESH_TOKEN_EXPIRES_IN
+    );
+
+    return {
+        accessToken: newAccessToken,
+        refreshToken: newRefreshToken
+    };
+
+};
+
 module.exports = {
     registerUser,
-    loginUser
+    loginUser,
+    refreshAccessToken
 };

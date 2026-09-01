@@ -22,7 +22,16 @@ const login = async (req, res) => {
     });
 };
 
+const refresh = async (req, res) => {
+    const {refreshToken} = req.body;
+
+    const result = await authService.refreshAccessToken(refreshToken);
+
+    res.status(200).json(result);
+}
+
 module.exports = {
     register,
-    login
+    login,
+    refresh
 };

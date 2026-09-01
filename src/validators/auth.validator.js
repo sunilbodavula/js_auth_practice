@@ -31,9 +31,16 @@ const loginSchema = z.object({
     .string()
     .min(8, "Password must be atleast 8 characters")
     .max(72, "Password cannot exceed 72 characters")
-})
+});
+
+const refreshSchema = z.object({
+    refreshToken: z
+    .string()
+    .min(1,"Invalid refresh token")
+});
 
 module.exports = {
     registerSchema,
-    loginSchema
+    loginSchema,
+    refreshSchema
 };
